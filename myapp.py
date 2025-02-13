@@ -7,7 +7,10 @@ def preprocess_excel(file):
     data = pd.read_excel(file)
     df = pd.DataFrame(data)
     df = df.iloc[10:-5]
-    df = df.drop(['Unnamed: 0', 'Unnamed: 2'], axis=1, errors='ignore')
+    if 'Unnamed: 2' in df.columns and df['Unnamed: 2'].astype(str).str.contains('Case Borrower Name').any():
+        df = df.drop(['Unnamed: 0'], axis=1, errors='ignore')
+    else:
+        df = df.drop(['Unnamed: 0', 'Unnamed: 2'], axis=1, errors='ignore')
     df = df.reset_index(drop=True)
     df.columns = df.iloc[0]  # Set first row as column names
     df = df[1:].reset_index(drop=True)  # Remove first row and reset index
@@ -60,7 +63,6 @@ def main():
     </div>
     """, unsafe_allow_html=True)
 
-    # Upload Excel file
     uploaded_file = st.file_uploader("📤 Upload Excel File (.xlsx)", type=["xlsx"])
     
     if uploaded_file is not None:
@@ -68,7 +70,7 @@ def main():
         df_expanded = format_dataframe(df)
         
         st.subheader("Processed Data")
-        # st.write(df_expanded)
+        st.write(df_expanded)
         
         excel_data = to_excel(df_expanded)
         st.download_button(label="Download Processed Excel", data=excel_data, file_name="processed_data.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
