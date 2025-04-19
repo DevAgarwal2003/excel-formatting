@@ -17,10 +17,16 @@ def preprocess_excel(file):
     return df
 
 def format_dataframe(df):
-    """Format the DataFrame by splitting the 'Case No: Loan A/C No.' column."""
+    """Format the DataFrame by splitting the 'Case No: Loan A/C No.' column and reformatting date columns."""
+    # Convert dates to desired format
+    date_columns = ['Date of Filling', 'Verification date']
+    for col in date_columns:
+        if col in df.columns:
+            df[col] = pd.to_datetime(df[col], errors='coerce').dt.strftime('%d-%m-%Y')
+
+    # Split 'Case No: Loan A/C No.' column
     cols_to_keep = [col for col in df.columns if col != 'Case No: Loan A/C No.']
     
-    # Split column and expand into multiple rows
     df_expanded = df.set_index(cols_to_keep)['Case No: Loan A/C No.'].str.split(' / |/', expand=True).stack().reset_index(name='Case No: Loan A/C No.')
     df_expanded = df_expanded.loc[:, ~df_expanded.columns.str.contains('level')]
     
