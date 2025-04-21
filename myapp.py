@@ -20,7 +20,7 @@ def format_dataframe(df):
     """Format the DataFrame by splitting the 'Case No: Loan A/C No.' column and reformatting date columns."""
     
     # Convert date columns to 'dd-mm-yyyy' format
-    date_columns = ['Date of Filling', 'DM Order Date', 'Verification date','DM Filling date','Next date of Hearing']
+    date_columns = ['DM Filling date','Date of Filling', 'DM Order Date', 'Verification date','Next date of Hearing']
     for col in date_columns:
         if col in df.columns:
             df[col] = pd.to_datetime(df[col], errors='coerce').dt.strftime('%d-%m-%Y')
