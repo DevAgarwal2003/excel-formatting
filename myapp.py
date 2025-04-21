@@ -17,13 +17,14 @@ def preprocess_excel(file):
     return df
 
 def format_dataframe(df):
-    """Format the DataFrame by splitting the 'Case No: Loan A/C No.' column and reformatting date columns."""
+    """Format the DataFrame by splitting the 'Case No: Loan A/C No.' column and reformatting date columns using column indices."""
     
-    # Convert date columns to 'dd-mm-yyyy' format
-    date_columns = ['DM Filling date','Date of Filling', 'DM Order Date', 'Verification date','Next date of Hearing']
-    for col in date_columns:
-        if col in df.columns:
-            df[col] = pd.to_datetime(df[col], errors='coerce').dt.strftime('%d-%m-%Y')
+    # Convert date columns using index positions (4, 6, 10, 11)
+    date_indices = [4, 6, 10, 11]
+    for idx in date_indices:
+        if idx < len(df.columns):
+            col_name = df.columns[idx]
+            df[col_name] = pd.to_datetime(df[col_name], errors='coerce').dt.strftime('%d-%m-%Y')
 
     # Split 'Case No: Loan A/C No.' column
     cols_to_keep = [col for col in df.columns if col != 'Case No: Loan A/C No.']
