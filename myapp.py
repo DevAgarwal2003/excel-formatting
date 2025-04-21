@@ -20,27 +20,33 @@ def format_dataframe(df):
     """Format the DataFrame using column indices for date and case number columns."""
 
     # Convert date columns using index positions (4, 6, 10, 11)
-    date_indices = [3, 5, 9, 10]
+    date_indices = [4, 6, 10, 11]
     for idx in date_indices:
         if idx < len(df.columns):
             col_name = df.columns[idx]
             df[col_name] = pd.to_datetime(df[col_name], errors='coerce').dt.strftime('%d-%m-%Y')
 
-    # Handle the 'Case No: Loan A/C No.' column by index 0
+    # Get the case number column by index
     case_col_name = df.columns[0]
     other_cols = df.columns[1:]
 
-    df_expanded = df.set_index(other_cols)[case_col_name].astype(str).str.split(' / |/', expand=True).stack().reset_index(name=case_col_name)
-    df_expanded = df_expanded.loc[:, ~df_expanded.columns.str.contains('level')]
+    # Expand the case number column safely
+    expanded_rows = []
+    for _, row in df.iterrows():
+        case_values = str(row[case_col_name]).split(' / ')
+        for case in case_values:
+            new_row = row.copy()
+            new_row[case_col_name] = case.strip()
+            expanded_rows.append(new_row)
 
-    # Merge back the other columns
-    df_expanded = df_expanded.merge(df[other_cols], on=list(other_cols), how='left')
+    df_expanded = pd.DataFrame(expanded_rows)
 
-    # Reorder with case column first
+    # Ensure correct column order
     final_columns = [case_col_name] + list(other_cols)
     df_expanded = df_expanded[final_columns]
 
     return df_expanded
+
 
 def to_excel(df):
     """Convert DataFrame to an Excel file in memory."""
