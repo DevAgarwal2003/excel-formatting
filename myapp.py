@@ -20,7 +20,7 @@ def format_dataframe(df):
     """Format the DataFrame by splitting the 'Case No: Loan A/C No.' column and reformatting date columns using column indices."""
     
     # Convert date columns using index positions (4, 6, 10, 11)
-    date_indices = [4, 6, 10, 11]
+    date_indices = [3, 5, 9, 10]
     for idx in date_indices:
         if idx < len(df.columns):
             col_name = df.columns[idx]
