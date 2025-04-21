@@ -17,8 +17,8 @@ def preprocess_excel(file):
     return df
 
 def format_dataframe(df):
-    """Format the DataFrame by splitting the 'Case No: Loan A/C No.' column and reformatting date columns using column indices."""
-    
+    """Format the DataFrame using column indices for date and case number columns."""
+
     # Convert date columns using index positions (4, 6, 10, 11)
     date_indices = [3, 5, 9, 10]
     for idx in date_indices:
@@ -26,19 +26,20 @@ def format_dataframe(df):
             col_name = df.columns[idx]
             df[col_name] = pd.to_datetime(df[col_name], errors='coerce').dt.strftime('%d-%m-%Y')
 
-    # Split 'Case No: Loan A/C No.' column
-    cols_to_keep = [col for col in df.columns if col != 'Case No: Loan A/C No.']
-    
-    df_expanded = df.set_index(cols_to_keep)['Case No: Loan A/C No.'].str.split(' / |/', expand=True).stack().reset_index(name='Case No: Loan A/C No.')
+    # Handle the 'Case No: Loan A/C No.' column by index 0
+    case_col_name = df.columns[0]
+    other_cols = df.columns[1:]
+
+    df_expanded = df.set_index(other_cols)[case_col_name].astype(str).str.split(' / |/', expand=True).stack().reset_index(name=case_col_name)
     df_expanded = df_expanded.loc[:, ~df_expanded.columns.str.contains('level')]
-    
-    # Restore original columns
-    df_expanded = df_expanded.merge(df[cols_to_keep], on=cols_to_keep, how='left')
-    
-    # Reorder columns
-    final_columns = ['Case No: Loan A/C No.'] + cols_to_keep
+
+    # Merge back the other columns
+    df_expanded = df_expanded.merge(df[other_cols], on=list(other_cols), how='left')
+
+    # Reorder with case column first
+    final_columns = [case_col_name] + list(other_cols)
     df_expanded = df_expanded[final_columns]
-    
+
     return df_expanded
 
 def to_excel(df):
