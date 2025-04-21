@@ -20,7 +20,7 @@ def format_dataframe(df):
     """Format the DataFrame using column indices for date and case number columns."""
 
     # Convert date columns using index positions (4, 6, 10, 11)
-    date_indices = [4, 6, 10, 11]
+    date_indices = [3, 5, 9, 10]
     for idx in date_indices:
         if idx < len(df.columns):
             col_name = df.columns[idx]
