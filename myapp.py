@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from io import BytesIO
+import re
 
 def preprocess_excel(file):
     """Load and preprocess the uploaded Excel file."""
@@ -33,7 +34,7 @@ def format_dataframe(df):
     # Expand the case number column safely
     expanded_rows = []
     for _, row in df.iterrows():
-        case_values = str(row[case_col_name]).split('/')
+        case_values = re.split(r'\s*/\s*', str(row[case_col_name]))
         for case in case_values:
             new_row = row.copy()
             new_row[case_col_name] = case.strip()
