@@ -18,36 +18,20 @@ def preprocess_excel(file):
     return df
 
 def format_dataframe(df):
-    """Format the DataFrame by converting all date-like columns and expanding case numbers."""
+    """Format the DataFrame using column indices for date and case number columns."""
 
-    # Make column names unique manually
-    def make_unique(columns):
-        seen = {}
-        new_cols = []
-        for col in columns:
-            if col in seen:
-                seen[col] += 1
-                new_cols.append(f"{col}.{seen[col]}")
-            else:
-                seen[col] = 0
-                new_cols.append(col)
-        return new_cols
+    # Convert date columns using index positions (4, 6, 10, 11)
+    date_indices = [1,2,3,4,5,6,7,8,9,10,11,12,13]
+    for idx in date_indices:
+        if idx < len(df.columns):
+            col_name = df.columns[idx]
+            df[col_name] = pd.to_datetime(df[col_name], errors='coerce').dt.strftime('%d-%m-%Y')
 
-    df.columns = make_unique(df.columns)
-
-    # Convert all date-like columns to 'dd-mm-yyyy' format
-    for col in df.columns:
-        try:
-            converted_col = pd.to_datetime(df[col], errors='coerce')
-            if converted_col.notna().sum() > 0:
-                df[col] = converted_col.dt.strftime('%d-%m-%Y')
-        except Exception:
-            continue
-
-    # Expand the case number column (assumed to be first column)
+    # Get the case number column by index
     case_col_name = df.columns[0]
     other_cols = df.columns[1:]
 
+    # Expand the case number column safely
     expanded_rows = []
     for _, row in df.iterrows():
         case_values = re.split(r'\s*/\s*', str(row[case_col_name]))
@@ -63,7 +47,6 @@ def format_dataframe(df):
     df_expanded = df_expanded[final_columns]
 
     return df_expanded
-
 
 
 def to_excel(df):
