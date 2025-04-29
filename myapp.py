@@ -20,18 +20,15 @@ def preprocess_excel(file):
 def format_dataframe(df):
     """Dynamically detect and format date-like columns, and expand case numbers."""
 
-    # Detect date-like columns by attempting to convert them
     for col in df.columns:
-        # Try parsing values as dates (only if the column is not fully null and not already datetime)
-        try:
-            sample = pd.to_datetime(df[col], errors='coerce')
-            # If at least 50% values are valid dates, consider it a date column
-            if sample.notna().mean() > 0.5:
-                df[col] = sample.dt.strftime('%d-%m-%Y')
-        except Exception:
-            pass
+        non_null_series = df[col].dropna().astype(str)
+        parsed_dates = pd.to_datetime(non_null_series, errors='coerce')
 
-    # Expand case number column (first column) if it contains slashes
+        # If at least 50% of non-null entries can be parsed as dates
+        if parsed_dates.notna().sum() / len(non_null_series) > 0.5:
+            df[col] = pd.to_datetime(df[col], errors='coerce').dt.strftime('%d-%m-%Y')
+
+    # Expand the case number column (assumed to be the first one)
     case_col_name = df.columns[0]
     other_cols = df.columns[1:]
 
