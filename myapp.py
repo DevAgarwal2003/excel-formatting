@@ -18,33 +18,36 @@ def preprocess_excel(file):
     return df
 
 def format_dataframe(df):
-    """Format the DataFrame by converting all date-like columns (without changing column names) and expanding case numbers."""
+    """Dynamically detect and format date-like columns, and expand case numbers."""
 
-    # Step 1: Use first row as column headers
-    df.columns = df.iloc[0].astype(str)
-    df = df[1:].reset_index(drop=True)
-
-    # Step 2: Try converting each column to datetime if it looks like one
+    # Detect date-like columns by attempting to convert them
     for col in df.columns:
+        # Try parsing values as dates (only if the column is not fully null and not already datetime)
         try:
-            parsed_dates = pd.to_datetime(df[col], errors='coerce')
-            if parsed_dates.notna().sum() > 0:
-                df[col] = parsed_dates.dt.strftime('%d-%m-%Y')
+            sample = pd.to_datetime(df[col], errors='coerce')
+            # If at least 50% values are valid dates, consider it a date column
+            if sample.notna().mean() > 0.5:
+                df[col] = sample.dt.strftime('%d-%m-%Y')
         except Exception:
-            continue
+            pass
 
-    # Step 3: Expand case numbers in the first column
-    case_col = df.columns[0]
+    # Expand case number column (first column) if it contains slashes
+    case_col_name = df.columns[0]
+    other_cols = df.columns[1:]
+
     expanded_rows = []
-
     for _, row in df.iterrows():
-        case_values = re.split(r'\s*/\s*', str(row[case_col]))
+        case_values = re.split(r'\s*/\s*', str(row[case_col_name]))
         for case in case_values:
             new_row = row.copy()
-            new_row[case_col] = case.strip()
+            new_row[case_col_name] = case.strip()
             expanded_rows.append(new_row)
 
     df_expanded = pd.DataFrame(expanded_rows)
+
+    # Ensure correct column order
+    final_columns = [case_col_name] + list(other_cols)
+    df_expanded = df_expanded[final_columns]
 
     return df_expanded
 
