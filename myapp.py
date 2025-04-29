@@ -20,8 +20,20 @@ def preprocess_excel(file):
 def format_dataframe(df):
     """Format the DataFrame by converting all date-like columns and expanding case numbers."""
 
-    # Make column headers unique
-    df.columns = pd.io.parsers.ParserBase({'names': df.columns})._maybe_dedup_names(df.columns)
+    # Make column names unique manually
+    def make_unique(columns):
+        seen = {}
+        new_cols = []
+        for col in columns:
+            if col in seen:
+                seen[col] += 1
+                new_cols.append(f"{col}.{seen[col]}")
+            else:
+                seen[col] = 0
+                new_cols.append(col)
+        return new_cols
+
+    df.columns = make_unique(df.columns)
 
     # Convert all date-like columns to 'dd-mm-yyyy' format
     for col in df.columns:
