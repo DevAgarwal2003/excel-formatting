@@ -20,14 +20,17 @@ def preprocess_excel(file):
 def format_dataframe(df):
     """Format the DataFrame by converting all date-like columns and expanding case numbers."""
 
+    # Make column headers unique
+    df.columns = pd.io.parsers.ParserBase({'names': df.columns})._maybe_dedup_names(df.columns)
+
     # Convert all date-like columns to 'dd-mm-yyyy' format
     for col in df.columns:
         try:
             converted_col = pd.to_datetime(df[col], errors='coerce')
-            if converted_col.notna().sum() > 0:  # If at least one valid date
+            if converted_col.notna().sum() > 0:
                 df[col] = converted_col.dt.strftime('%d-%m-%Y')
         except Exception:
-            continue  # Skip if conversion fails
+            continue
 
     # Expand the case number column (assumed to be first column)
     case_col_name = df.columns[0]
@@ -48,6 +51,7 @@ def format_dataframe(df):
     df_expanded = df_expanded[final_columns]
 
     return df_expanded
+
 
 
 def to_excel(df):
