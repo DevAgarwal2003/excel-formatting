@@ -18,49 +18,33 @@ def preprocess_excel(file):
     return df
 
 def format_dataframe(df):
-    """Format the DataFrame by converting all date-like columns and expanding case numbers."""
+    """Format the DataFrame by converting all date-like columns (without changing column names) and expanding case numbers."""
 
-    # Step 1: Clean up column headers (ensure unique names)
-    df.columns = df.iloc[0].astype(str)  # Use first row as headers
+    # Step 1: Use first row as column headers
+    df.columns = df.iloc[0].astype(str)
     df = df[1:].reset_index(drop=True)
 
-    # Ensure column names are unique
-    def make_unique(col_list):
-        counts = {}
-        unique_cols = []
-        for col in col_list:
-            col = col.strip()
-            if col in counts:
-                counts[col] += 1
-                unique_cols.append(f"{col}_{counts[col]}")
-            else:
-                counts[col] = 0
-                unique_cols.append(col)
-        return unique_cols
-
-    df.columns = make_unique(df.columns)
-
-    # Step 2: Convert all date-like columns
+    # Step 2: Try converting each column to datetime if it looks like one
     for col in df.columns:
         try:
-            parsed = pd.to_datetime(df[col], errors='coerce')
-            if parsed.notna().sum() > 0:
-                df[col] = parsed.dt.strftime('%d-%m-%Y')
+            parsed_dates = pd.to_datetime(df[col], errors='coerce')
+            if parsed_dates.notna().sum() > 0:
+                df[col] = parsed_dates.dt.strftime('%d-%m-%Y')
         except Exception:
             continue
 
-    # Step 3: Expand the case number column (assume it's the first column)
+    # Step 3: Expand case numbers in the first column
     case_col = df.columns[0]
-    expanded_data = []
+    expanded_rows = []
 
     for _, row in df.iterrows():
-        cases = re.split(r'\s*/\s*', str(row[case_col]))
-        for case in cases:
+        case_values = re.split(r'\s*/\s*', str(row[case_col]))
+        for case in case_values:
             new_row = row.copy()
             new_row[case_col] = case.strip()
-            expanded_data.append(new_row)
+            expanded_rows.append(new_row)
 
-    df_expanded = pd.DataFrame(expanded_data)
+    df_expanded = pd.DataFrame(expanded_rows)
 
     return df_expanded
 
