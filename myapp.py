@@ -18,35 +18,52 @@ def preprocess_excel(file):
     return df
 
 def format_dataframe(df):
-    """Format the DataFrame using column indices for date and case number columns."""
+    """Format the DataFrame by converting all date-like columns and expanding case numbers."""
 
-    # Convert date columns using index positions (4, 6, 10, 11)
-    date_indices = [1,2,3,4,5,6,7,8,9,10,11,12,13]
-    for idx in date_indices:
-        if idx < len(df.columns):
-            col_name = df.columns[idx]
-            df[col_name] = pd.to_datetime(df[col_name], errors='coerce').dt.strftime('%d-%m-%Y')
+    # Step 1: Clean up column headers (ensure unique names)
+    df.columns = df.iloc[0].astype(str)  # Use first row as headers
+    df = df[1:].reset_index(drop=True)
 
-    # Get the case number column by index
-    case_col_name = df.columns[0]
-    other_cols = df.columns[1:]
+    # Ensure column names are unique
+    def make_unique(col_list):
+        counts = {}
+        unique_cols = []
+        for col in col_list:
+            col = col.strip()
+            if col in counts:
+                counts[col] += 1
+                unique_cols.append(f"{col}_{counts[col]}")
+            else:
+                counts[col] = 0
+                unique_cols.append(col)
+        return unique_cols
 
-    # Expand the case number column safely
-    expanded_rows = []
+    df.columns = make_unique(df.columns)
+
+    # Step 2: Convert all date-like columns
+    for col in df.columns:
+        try:
+            parsed = pd.to_datetime(df[col], errors='coerce')
+            if parsed.notna().sum() > 0:
+                df[col] = parsed.dt.strftime('%d-%m-%Y')
+        except Exception:
+            continue
+
+    # Step 3: Expand the case number column (assume it's the first column)
+    case_col = df.columns[0]
+    expanded_data = []
+
     for _, row in df.iterrows():
-        case_values = re.split(r'\s*/\s*', str(row[case_col_name]))
-        for case in case_values:
+        cases = re.split(r'\s*/\s*', str(row[case_col]))
+        for case in cases:
             new_row = row.copy()
-            new_row[case_col_name] = case.strip()
-            expanded_rows.append(new_row)
+            new_row[case_col] = case.strip()
+            expanded_data.append(new_row)
 
-    df_expanded = pd.DataFrame(expanded_rows)
-
-    # Ensure correct column order
-    final_columns = [case_col_name] + list(other_cols)
-    df_expanded = df_expanded[final_columns]
+    df_expanded = pd.DataFrame(expanded_data)
 
     return df_expanded
+
 
 
 def to_excel(df):
