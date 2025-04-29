@@ -26,7 +26,7 @@ def format_dataframe(df):
 
         # If at least 50% of non-null entries can be parsed as dates
         if parsed_dates.notna().sum() / len(non_null_series) > 0.5:
-            df[col] = pd.to_datetime(df[col], errors='coerce').dt.strftime('%d-%m-%Y')
+            df[col] = pd.to_datetime(df[col], errors='coerce').dt.strftime('%d/%m/%y')
 
     # Expand the case number column (assumed to be the first one)
     case_col_name = df.columns[0]
