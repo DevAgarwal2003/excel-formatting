@@ -50,6 +50,7 @@ def format_dataframe(df):
 
 
 
+
 def to_excel(df):
     """Convert DataFrame to an Excel file in memory."""
     output = BytesIO()
